@@ -209,17 +209,13 @@ dev.off()
 ```{r}
 
 udata <- as.data.frame(svd.out$u[,1:5])
-data_for_plot <- gather(udata, key = "Vector", value = "Value")
+data_for_plot <- tidyr::gather(udata, key = "Vector", value = "Value")
 
 names(udata)
 
 pdf("park_problem4.pdf")
-# ggplot(PC) + geom_violin(aes(x=as.factor(strain), y=V1),draw_quantiles = c(0.25, 0.5, 0.75)) + geom_jitter(aes(x=as.factor(strain), y=V1)) +
 ggplot(data_for_plot, aes(x = Vector, y = Value, fill = Vector)) +
   geom_violin()
-  # labs(x = "Left Singular Vectors", y = "Value") +
-  # theme_minimal() +
-  # theme(axis.text.x = element_text(angle = 45, hjust = 1))
 dev.off()
 ```
 
