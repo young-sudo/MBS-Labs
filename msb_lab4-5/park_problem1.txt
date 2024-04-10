@@ -1,0 +1,13 @@
+Table: Distribution of tissues in different batches (columns).
+All of the batches have one dominant tissue type in them.
+This can lead to systematic differences that are not the
+result of biological differences, but technical ones, like
+variations in measurement conditions in each of the batches.
+
+|         |  1|  2|  3|  4|  5|
+|:--------|--:|--:|--:|--:|--:|
+|Biopsy   |  0|  0|  0|  5|  4|
+|mTCC     | 11|  1|  0|  0|  0|
+|Normal   |  0|  4|  4|  0|  0|
+|sTCC-CIS |  0| 13|  0|  0|  3|
+|sTCC+CIS |  0|  0|  0|  0| 12|
