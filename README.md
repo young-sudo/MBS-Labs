@@ -12,3 +12,5 @@
 ## Lab 4-5 - Batch effects
 
 `msb_lab4-5` directory contains 4 `pdf` files with plots for tasks 2-5 and one `txt` file with a table for problem 1.
+
+>`park_problem2.pdf` is quite big and it might take a while to render inside the default Github pdf viewer
