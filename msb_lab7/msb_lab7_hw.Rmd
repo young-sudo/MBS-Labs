@@ -1,0 +1,243 @@
+---
+title: "msb_lab7_pd"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+all_times <- list()  # store the time for each chunk
+knitr::knit_hooks$set(time_it = local({
+  now <- NULL
+  function(before, options) {
+    if (before) {
+      now <<- Sys.time()
+    } else {
+      res <- difftime(Sys.time(), now, units = "secs")
+      all_times[[options$label]] <<- res
+    }
+  }
+}))
+knitr::opts_chunk$set(
+  tidy = TRUE,
+  tidy.opts = list(width.cutoff = 95),
+  message = FALSE,
+  warning = FALSE,
+  time_it = TRUE
+)
+```
+
+
+```{r init}
+library(dplyr)
+library(Seurat)
+library(patchwork)
+library(stats) # for kmeans
+
+pbmc.data <- Read10X(data.dir = "./filtered_matrices_mex/hg19")
+# Initialize the Seurat object with the raw (non-normalized data).
+pbmc <- CreateSeuratObject(counts = pbmc.data, project = "pbmc68k", min.cells = 3, min.features = 200)
+pbmc
+```
+
+
+# Homework
+
+You need to apply the same analysis pipeline to the bigger dataset published in Zheng et al. 2017, specifically called 'Fresh 68k PBMCs (Donor A)'. If you are not familiar, please read the original paper (listed on the syllabus and the website).
+
+Download the following data on 10X Genomics
+https://support.10xgenomics.com/single-cell-gene-expression/datasets
+
+### Single Cell 3' Paper: Zheng et al. 2017
+#### Fresh 68k PBMCs (Donor A)
+
+
+# Homework Problem 1
+Analyze the 68k PBMCs dataset in the same way as presented in the Seurat's guide with PBMC3k. Apply QC, PCA, jackstraw, clustering, and t-SNE to create figure similar to Figure 3b on Zheng et al. 2017. Note that there are differences between Zheng's original analysis and Seurat's analysis. Pay attentions to hyper-parameters that you must choose for this new bigger dataset.
+
+Provide R markdown file with your codes and outputs.
+
+Present the t-SNE visualization with 10 clusters as defined by K-means clustering
+
+Reproduce Figure 3 but note difference in results: https://www.nature.com/articles/ncomms14049/figures/3
+
+
+```{r mito}
+
+pbmc[["percent.mt"]] <- PercentageFeatureSet(pbmc, pattern = "^MT-")
+
+```
+
+
+```{r qc}
+
+# Visualize QC
+VlnPlot(pbmc, features = c("nFeature_RNA", "nCount_RNA", "percent.mt"), ncol = 3)
+
+# FeatureScatter is typically used to visualize feature-feature relationships, but can be used
+# for anything calculated by the object, i.e. columns in object metadata, PC scores etc.
+plot1 <- FeatureScatter(pbmc, feature1 = "nCount_RNA", feature2 = "percent.mt")
+plot2 <- FeatureScatter(pbmc, feature1 = "nCount_RNA", feature2 = "nFeature_RNA")
+plot1 + plot2
+
+```
+
+
+```{r qc2}
+# a bit different cutoff from the tutorial
+pbmc <- subset(pbmc, subset = nFeature_RNA > 200 & nFeature_RNA < 2000 & percent.mt < 5)
+
+```
+
+
+```{r norm}
+# Normalize the data
+pbmc <- NormalizeData(pbmc, normalization.method = "LogNormalize", scale.factor = 10000)
+# Pearson residuals might be more helpful in reconstructing cell subtypes
+```
+
+
+```{r var_features}
+
+pbmc <- FindVariableFeatures(pbmc, selection.method = "vst", nfeatures = 2000)
+
+# Identify the 10 most highly variable genes
+top10 <- head(VariableFeatures(pbmc), 10)
+
+# plot variable features with and without labels
+plot1 <- VariableFeaturePlot(pbmc)
+plot2 <- LabelPoints(plot = plot1, points = top10, repel = TRUE)
+plot1 + plot2
+```
+
+```{r regress}
+# Scaling the data
+all.genes <- rownames(pbmc)
+pbmc <- ScaleData(pbmc, vars.to.regress = 'percent.mt')
+```
+
+```{r pca}
+pbmc <- RunPCA(pbmc, features = VariableFeatures(object = pbmc))
+
+# Examine and visualize PCA results a few different ways
+print(pbmc[['pca']], dims = 1:5, nfeatures = 5)
+VizDimLoadings(pbmc, dims = 1:2, reduction = 'pca')
+DimPlot(pbmc, reduction = 'pca')
+```
+
+
+```{r jackstraw}
+# takes ~20 min on my laptop
+# pbmc <- JackStraw(pbmc, num.replicate = 100)
+# pbmc <- ScoreJackStraw(pbmc, dims = 1:20) #thresolding
+# 
+# JackStrawPlot(pbmc, dims = 1:15)
+```
+
+```{r elbowplot}
+ElbowPlot(pbmc)
+```
+
+```{r knn}
+pbmc <- FindNeighbors(pbmc, dims = 1:10)
+pbmc <- FindClusters(pbmc, resolution = 0.5)
+
+# Look at cluster IDs of the first 5 cells
+head(Idents(pbmc), 5)
+```
+
+```{r umapplot}
+# note that you can set `label = TRUE` or use the LabelClusters function to help label individual clusters
+pbmc <- RunUMAP(pbmc, dims = 1:10)
+DimPlot(pbmc, reduction = 'umap')
+```
+
+```{r}
+
+```
+
+
+
+```{r kmeans}
+# possibly helpful github issues:
+# https://github.com/satijalab/seurat/issues/333
+# https://github.com/satijalab/seurat/issues/1751
+embs <- Embeddings(pbmc, reduction="pca")
+km <- kmeans(embs, centers=10)
+
+```
+
+```{r tsne_plot}
+library(irlba)
+library(Rtsne)
+library(data.table)
+
+tsne_out <- Rtsne(embs, pca=FALSE, perplexity=60)
+tsne_out.Y = data.table(tsne_out$Y)
+tsne_out.Y$cluster <- factor(km$cluster)
+```
+
+
+```{r plottheplot}
+library(ggplot2)
+tsne_plot <- ggplot(tsne_out.Y) + geom_point(aes(x=V1, y=V2, color=cluster)) + ggtitle("Visualization of the clusters obtained with K-means using t-SNE")
+tsne_plot
+```
+
+```{r savetheplot}
+ggsave("park_problem1.png", plot = tsne_plot, width = 10, height = 10, units = "in", dpi = 300)
+```
+
+
+# Homework Problem 2
+Create a hierachical clustering by applying K-means clustering to cells defined by each of 10 cluster. Try to find a suitable number of clusters (k) for each sub-population.
+
+Present
+
+* overall t-SNE visualization with all clusters -- make sure that hierarchy (group) is visualized.
+* visualize t-SNE for each of 10 clusters, with their sub-clusters.
+
+For example, Zheng et al. 2017
+>  To identify subpopulations within the myeloid population, we further applied k-means clustering on the first 50 PCs of cluster 9 cells
+
+```{r}
+# https://stackoverflow.com/questions/51089556/rtsne-perplexity-is-too-large
+floor((nrow(embs) - 1) / 3)
+```
+
+
+```{r}
+# From Cell paper with DropSeq
+# perform pca separately on clusters
+k <- 10
+
+plot_list <- list()
+
+for (i in 1:k) {  # assuming k is the number of clusters
+  subset_embs <- embs[km$cluster == i, ]
+  subset_km <- kmeans(subset_embs, centers=3)
+  
+  subset_tsne_out <- Rtsne(subset_embs, pca=FALSE)#, perplexity=60)
+  subset_tsne_out.Y = data.table(subset_tsne_out$Y)
+  subset_tsne_out.Y$cluster <- factor(subset_km$cluster)
+  subset_plot <- ggplot(subset_tsne_out.Y) + geom_point(aes(x=V1, y=V2, color=cluster)) + ggtitle(paste("Clustered cluster ", i))
+  print(subset_plot)
+  
+  plot_list[[i]] <- subset_plot
+}
+
+```
+
+
+```{r}
+library(gridExtra)
+plot_grid <- grid.arrange(grobs = plot_list, ncol = 3)
+plot_grid
+ggsave("park_problem2.png", plot=plot_grid,  width = 10, height = 8, units = "in")
+```
+
+
+<details>
+  <summary>**Session Info**</summary>
+```{r}
+sessionInfo()
+```
+</details>
