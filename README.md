@@ -18,3 +18,7 @@
 ## Lab 7 - Single cell biology
 
 `msb_lab7` directory contains 2 `png` files with plots for problems 1 and 2.
+
+## Classnote
+
+`msb_classnote` contains the classnote on the topic of "scRNA-seq analysis and cellular populations".
