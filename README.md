@@ -19,6 +19,10 @@
 
 `msb_lab7` directory contains 2 `png` files with plots for problems 1 and 2.
 
+## Lab 10 - Deep Neural Networks
+
+`msb_lab10` directory contains a python notebook and an html version of the notebook.
+
 ## Classnote
 
 `msb_classnote` contains the classnote on the topic of "scRNA-seq analysis and cellular populations".
