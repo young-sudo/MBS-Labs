@@ -23,6 +23,10 @@
 
 `msb_lab10` directory contains a python notebook and an html version of the notebook.
 
+## Lab 11 - Interpretability of ML
+
+`msb_lab11` directory contains a python notebook with SmoothGrad implementation
+
 ## Classnote
 
 `msb_classnote` contains the classnote on the topic of "scRNA-seq analysis and cellular populations".
