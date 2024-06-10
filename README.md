@@ -30,3 +30,7 @@
 ## Classnote
 
 `msb_classnote` contains the classnote on the topic of "scRNA-seq analysis and cellular populations".
+
+## Project
+
+`msb_project` is the main directory for the final class project
