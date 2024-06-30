@@ -351,6 +351,8 @@ ElbowPlot(non_malignant_cells)
 
 ### Clustering
 
+PCs from the variable feature analysis will be used
+
 SNN implemented in Seurat
 https://satijalab.org/seurat/reference/findneighbors
 https://satijalab.org/seurat/reference/findclusters
